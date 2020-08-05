@@ -57,7 +57,7 @@ textarea {
           <div class="row mb-3 pb-3 border-bottom">
             <div class="col-12 col-lg-2 lead">Email Content</div>
             <div class="col">
-              <div id="content" contenteditable="true">Paste here</div>
+              <div class="py-2" id="content" contenteditable="true">Paste here</div>
             </div>
           </div>
           <div class="row">
@@ -127,15 +127,13 @@ textarea {
     document.getElementById("content").onclick = selectThis
     document.getElementById("content").onpaste = (event) => {
       const paste = (event.clipboardData || window.clipboardData).getData('text/html')
-console.log(paste)
       const content = paste
-        .replace(/ data-saferedirecturl=".*?"/gi, '')   // Remove unnecessary attribute
-        .replace(/<wbr>/gi, '')                         // Remove from visible URLs in content
+        .replace(/ data-saferedirecturl=".*?"/gi, '')      // Remove unnecessary attribute
+        .replace(/<wbr>/gi, '')                            // Remove breaks from visible URLs in content
+        .replace(/<span class="il">(.*?)<\/span>/gi, '$1') // Remove search highlight spans
         .replace(urlRe, match => extractUrl(match))
-       console.log(content)
       document.getElementById("contentOutput").innerHTML = content
     }
-
   </script>
 </body>
 </html>
