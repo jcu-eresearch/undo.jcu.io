@@ -1,0 +1,141 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8" /> 
+<title>Office 365 Decoders</title>
+<link rel="stylesheet" href="https://cdn.jcu.edu.au/cookbook/2.0.0-alpha.8/css/cookbook.min.css">
+<link rel="stylesheet" href="https://cdn.jcu.edu.au/cookbook/2.0.0-alpha.8/css/fonts.min.css">
+<link rel="stylesheet" href="https://cdn.jcu.edu.au/cookbook/2.0.0-alpha.8/css/materialdesignicons.min.css">
+<style>
+.border-5 {
+  border-width: 5px !important;
+}
+
+textarea {
+  width: 100%;
+  height: 100px;
+  border: 3px solid #999;
+  font-family
+}
+
+#content {
+  max-height: 100px;
+  overflow-y: scroll;
+  color: var(--gray);
+}
+</style>
+</head>
+<body class="py-3">
+  <div class="container">
+    <div class="row">
+      <div class="col">
+        <div class="border-bottom mb-3 pb-3">
+          <h1>Office 365 Decoder Tools</h1>
+          <p class="lead mb-0">Can't read your URL or your email? All tools operate locally within your browser; no data is sent to the server. Use your browser's <em>View&nbsp;Source</em> feature to check the underlying JavaScript code.</p>
+        </div>
+
+        <div class="border-bottom border-5 mb-3 pb-3">
+          <div class="row mb-2">
+            <div class="col-12 col-lg-2 lead"><label for="safelink">SafeLinks URL</label></div>
+            <div class="col">
+              <textarea class="text-monospace" autofocus id="safelink"></textarea>
+              <a href="javascript:clearUrl()" class="float-right text-monospace lead">[clear]</a>
+            </div>
+          </div>
+          <div class="row">
+            <div class="col-12 col-lg-2 lead"><label for="targetUrl">Decoded URL</label></div>
+            <div class="col">
+              <textarea class="text-monospace" id="targetUrl">Waiting...</textarea>
+            </div>
+            <div class="col">
+              <a class="text-break" id="targetUrlLink" href="#" target="_blank" rel="noreferrer noopener">Waiting...</a> <span class="mdi mdi-open-in-new" title="Link opens in a new window"></span>
+            </div>
+          </div>
+        </div>
+
+        <div class="border-bottom border-5 mb-3 pb-3">
+          <div class="row mb-3 pb-3 border-bottom">
+            <div class="col-12 col-lg-2 lead">Email Content</div>
+            <div class="col">
+              <div id="content" contenteditable="true">Paste here</div>
+            </div>
+          </div>
+          <div class="row">
+            <div class="col-12 col-lg-2 lead">Email Output</div>
+            <div class="col">
+              <div id="contentOutput">Waiting...</div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+  <script>
+    function extractUrl(safelink) {
+      const queryString = safelink.split("?")[1]
+      if (queryString) {
+        for (let param of queryString.split("&")) {
+          const pair = param.split("=")
+          if (pair[0] == "url") {
+            return decodeURIComponent(pair[1])
+          }
+        }
+      }
+      return safelink
+    }
+
+    // Safelink decoder
+    function clearUrl() {
+      document.getElementById("safelink").value = ""
+      document.getElementById("targetUrl").value = document.getElementById("targetUrlLink").href = document.getElementById("targetUrlLink").innerHTML = "Waiting..."
+    }
+
+    function decodeSafelink() {
+      const safelink = document.getElementById("safelink").value
+      if (!safelink.length) return
+
+      const targetUrl = extractUrl(safelink)
+
+      if (targetUrl) {
+        document.getElementById("targetUrl").value = document.getElementById("targetUrlLink").href = document.getElementById("targetUrlLink").innerHTML = targetUrl
+      } else {
+        document.getElementById("targetUrl").value = "Error:  couldn't find target URL"
+      }
+    }
+
+    decodeSafelink()
+    document.getElementById("safelink").onchange = () => setTimeout(decodeSafelink, 20) 
+    document.getElementById("safelink").onpaste = decodeSafelink
+    document.getElementById("targetUrl").onclick = function() {
+      this.focus()
+      this.select()
+    }
+
+    // Email reader
+    const urlRe = /((http|https|ftp):\/\/[\w?=&.\/-;#~%-]+(?![\w\s?&.\/;#~%=-]*>))/gi
+
+
+    function selectThis() {
+	const selection = window.getSelection()
+        const range = document.createRange()
+        range.selectNodeContents(this)
+        selection.removeAllRanges()
+        selection.addRange(range)
+    }
+
+    document.getElementById("content").onclick = selectThis
+    document.getElementById("content").onpaste = (event) => {
+      const paste = (event.clipboardData || window.clipboardData).getData('text/html')
+console.log(paste)
+      const content = paste
+        .replace(/ data-saferedirecturl=".*?"/gi, '')   // Remove unnecessary attribute
+        .replace(/<wbr>/gi, '')                         // Remove from visible URLs in content
+        .replace(urlRe, match => extractUrl(match))
+       console.log(content)
+      document.getElementById("contentOutput").innerHTML = content
+    }
+
+  </script>
+</body>
+</html>
